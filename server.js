@@ -1,9 +1,8 @@
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
+if (process.env.NODE_ENV !== 'production') { require('dotenv').config() }
 const express = require("express")
 const app = express()
 const expressLayouts = require("express-ejs-layouts")
+const methodOverride = require('method-override')
 const indexRouter = require('./routes/index')
 const authorRouter = require('./routes/authors')
 const bookRouter= require('./routes/books')
@@ -21,6 +20,7 @@ app.set('layout', 'layouts/layout')
 app.use(express.urlencoded({limit: '50mb', extended: true }))
 app.use(express.json())
 app.use(expressLayouts)
+app.use(methodOverride('_method'))
 app.use(express.static('public'))
 app.use('/',indexRouter)
 app.use('/authors', authorRouter)
