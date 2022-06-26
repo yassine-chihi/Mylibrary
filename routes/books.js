@@ -41,46 +41,128 @@ router.post('/', async (req, res) => {
         pageCount: req.body.pageCount,
         description: req.body.description,
     })
-    saveCover(book, req.body.cover)
+    saveCover(res, book, req.body.cover)
     try {
         const newBook = await book.save()
         // res.redirect(`books/${newBook.id}`)
         res.redirect('books')
-    } catch {
+    } catch (error){
+        console.log(error);
         renderNewPage(res, book, true)
-        console.error(book.save());
+    }
+})
+
+// Show Book Route
+router.get('/:id', async(req, res) => {
+    try {
+        const book = await Book.findById(req.params.id).populate('author').exec() // add author properties such as name since book schema has only the id of the author
+        res.render('books/show', { book: book })
+    } catch (error) {
+        res.redirect('/')
+    }
+})
+
+// Edit Book Route
+router.get('/:id/edit', async(req, res) => {
+    try {
+        const book = await Book.findById(req.params.id)
+        renderEditPage(res, book)
+    } catch (error) {
+        console.error(error)
+        res.redirect('/')
+    }
+})
+
+// Update Book page
+router.put('/:id', async(req, res) => {
+    let book
+    try {
+        book = await Book.findById(req.params.id)
+        book.title = req.body.title
+        book.author = req.body.author
+        book.publishDate = new Date(req.body.publishDate)
+        book.pageCount = req.body.pageCount
+        book.description = req.body.description
+        if (req.body.cover != null && req.body.cover != '') {
+            saveCover(req.body.cover)
+        }
+        await book.save()
+        res.redirect(`/books/${book.id}`)
+    } catch (error) {
+        if (book != null) {
+            renderEditPage(res, book, true)
+        } else {
+            res.redirect('/')
+        }
+    }
+})
+
+// Delete Book page
+router.delete('/:id', async (req,res) => {
+    let book
+    try {
+        const book = await Book.findById(req.params.id)
+        await book.remove()
+        res.redirect('/books')
+    } catch (error) {
+        if (book != null) {
+            res.render('books/show', {
+                book: book,
+                errorMessage: 'Could not remove the book'
+            })
+        } else {
+            res.redirect('/')
+        }
     }
 })
 
 async function renderNewPage(res, book, hasError = false){
+    renderFormPage(res, book, 'new', hasError)
+}
+
+async function renderEditPage(res, book, hasError= false){
+    renderFormPage(res, book, 'edit', hasError)
+}
+
+async function renderFormPage(res, book, form, hasError = false){
     try {
         const authors = await Author.find() 
         const params = {
             authors: authors,
             book: book
         }
-        if (hasError===true) params.errorMessage = 'Error while creating Book'
-        res.render('books/new', params)
+        if (hasError){
+           if (form === 'edit') {
+                params.errorMessage = 'Error while Updating Book'
+           }  else {
+                params.errorMessage = 'Error while Creating Book'
+           }
+        }
+        res.render(`books/${form}`, params)
     } catch  {
-        console.log('catch is here !')
         res.redirect('books')
     }
 }
 
-function saveCover(book, coverImageEncoded) {
+function saveCover(res, book, coverImageEncoded) {
     if (coverImageEncoded == null) return
-    const cover = JSON.parse(coverImageEncoded)
-    if (cover != null && imageMimeTypes.includes(cover.type)){
-        book.coverImage = new Buffer.from(cover.data, 'base64')
-        book.coverImageType = cover.type
+    try {
+        const cover = JSON.parse(coverImageEncoded)
+        if (cover != null && imageMimeTypes.includes(cover.type)) {
+            book.coverImage = new Buffer.from(cover.data, 'base64')
+            book.coverImageType = cover.type
+        }
+    } catch (error) {
+        res.redirect('/books')
     }
 }
 
 module.exports = router
 
-
 // **** Used filepond plugins instead of this static method to upload images ****
+
 // const uploadPath = path.join('public', Book.coverImageBasePath)
+// const fs = require('fs')
 // const upload = multer({
     //     dest: uploadPath,
     //     fileFilter: (req, file, callback) => {
