@@ -1,0 +1,6 @@
+:root {
+    --color-background-dark: #280c3e;
+    --color-background-light: #3b0571;
+    --color-text-light: hsl(200, 100%, 87%);
+    --color-btn-danger-hue: calc(200 - 180);
+}
