@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mylibrary-deployment
+  labels:
+    app: mylibrary
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mylibrary
+  template:
+    metadata:
+      labels:
+        app: mylibrary
+    spec:
+      containers:
+        - name: mylibrary-nodeserver
+          image: yassinechihi/mylibrary:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: DATABASE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mylibrary-service
+spec:
+  selector:
+    app: mylibrary
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer

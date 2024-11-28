@@ -1,12 +1,13 @@
-if (process.env.NODE_ENV !== 'production') require('dotenv').config() 
+if (process.env.NODE_ENV !== 'production') require('dotenv').config()
 const express = require("express")
-const app = express()
 const expressLayouts = require("express-ejs-layouts")
 const methodOverride = require('method-override')
 const indexRouter = require('./routes/index')
 const authorRouter = require('./routes/authors')
 const bookRouter= require('./routes/books')
 const mongoose = require('mongoose')
+
+const app = express()
 const db = mongoose.connection
 
 mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true })
